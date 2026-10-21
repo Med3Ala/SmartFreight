@@ -1,10 +1,8 @@
 // Helpers for reading a Best Formula Matrix as served by the backend.
 
-export const STRATEGY_LABEL = {
-  lowest_cost: "Lowest cost",
-  fastest_transit: "Fastest transit",
-  balanced: "Balanced",
-};
+import { lang, t } from "./i18n";
+
+export const strategyLabel = (strategy) => t(`strategy.${strategy}`);
 
 // ISO 6346 size-type codes for the boxes the agent typically proposes.
 const ISO_CODES = {
@@ -46,27 +44,26 @@ export function ddPerDay(option) {
   return (n(det) ?? 0) * boxCount(option.equipment) + (n(dem) ?? 0) * boxCount(option.equipment);
 }
 
-export function money(value, currency, { sign = false } = {}) {
-  if (value === null || value === undefined) return "n/a";
-  const s = new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
-  return sign && value > 0 ? `+${s}` : s;
+export function money(value, currency) {
+  if (value === null || value === undefined) return t("na");
+  return new Intl.NumberFormat(lang().intl, { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
 }
 
 // Mirrors the backend contract for when the API is not running.
 export function checkOffline(m) {
   const errors = [];
-  if (!m || !Array.isArray(m.options)) return ["The answer has no options list."];
+  if (!m || !Array.isArray(m.options)) return [t("check.noOptions")];
   const ids = m.options.map((o) => o.id).join(",");
-  if (ids !== "A,B,C") errors.push(`Options must be exactly A, B and C in that order (got ${ids || "none"}).`);
+  if (ids !== "A,B,C") errors.push(t("check.order", { ids: ids || t("check.none") }));
   const expected = { A: "lowest_cost", B: "fastest_transit", C: "balanced" };
   for (const o of m.options) {
-    if (expected[o.id] && o.strategy !== expected[o.id]) errors.push(`Option ${o.id} must use strategy ${expected[o.id]}.`);
-    if (!o.profit_margin) errors.push(`Option ${o.id} is missing its profit margin.`);
-    if (!o.equipment?.containers?.length) errors.push(`Option ${o.id} lists no containers.`);
-    if (!o.risk?.pitfalls?.length) errors.push(`Option ${o.id} has no risk pitfalls.`);
+    if (expected[o.id] && o.strategy !== expected[o.id]) errors.push(t("check.strategy", { id: o.id, strategy: expected[o.id] }));
+    if (!o.profit_margin) errors.push(t("check.noMargin", { id: o.id }));
+    if (!o.equipment?.containers?.length) errors.push(t("check.noContainers", { id: o.id }));
+    if (!o.risk?.pitfalls?.length) errors.push(t("check.noPitfalls", { id: o.id }));
   }
   const currencies = new Set(m.options.map((o) => o.profit_margin?.currency));
-  if (currencies.size > 1) errors.push("All options must use the same currency.");
-  if (!["A", "B", "C"].includes(m.recommended)) errors.push("Recommended must be A, B or C.");
+  if (currencies.size > 1) errors.push(t("check.currency"));
+  if (!["A", "B", "C"].includes(m.recommended)) errors.push(t("check.recommended"));
   return errors;
 }

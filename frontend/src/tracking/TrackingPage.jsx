@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Arrow from "../components/Arrow";
 import { loadTracking } from "../lib/api";
+import { num, pct, t, time, useLang } from "../lib/i18n";
 import useTheme from "../lib/useTheme";
 import { ArrivalsChart, EmptiesChart, ReliabilityChart } from "./Charts";
 import {
@@ -16,9 +18,9 @@ import {
 import TrackingMap from "./TrackingMap";
 
 const PHASES = [
-  { id: "all", label: "All" },
-  { id: "at_sea", label: "At sea" },
-  { id: "arrived", label: "Arrived" },
+  { id: "all", label: "filter.all" },
+  { id: "at_sea", label: "filter.atSea" },
+  { id: "arrived", label: "filter.arrived" },
 ];
 
 function Chip({ active, onClick, children, swatch }) {
@@ -41,7 +43,7 @@ function Kpi({ label, value, note, tone }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5 rounded-md border border-line bg-surface px-4 py-3">
       <span className="label">{label}</span>
-      <span className={`num font-display text-3xl leading-none font-bold ${tone ?? ""}`}>{value}</span>
+      <span className={`num font-display text-3xl leading-none font-bold ${tone ?? ""}`}>{num(value)}</span>
       <span className="text-[12px] text-muted">{note}</span>
     </div>
   );
@@ -50,12 +52,12 @@ function Kpi({ label, value, note, tone }) {
 function Insight({ item, kind, onSelect }) {
   const stripe = kind === "need" ? "border-warn" : item.tone === "accent" ? "border-accent" : "border-good";
   return (
-    <li className={`flex flex-col gap-0.5 border-l-[3px] py-0.5 pl-3 ${stripe}`}>
+    <li className={`flex flex-col gap-0.5 border-s-[3px] py-0.5 ps-3 ${stripe}`}>
       <span className="text-[13px] font-semibold">{item.title}</span>
       <span className="text-[13px] text-muted">{item.body}</span>
       {item.ref && (
         <button type="button" onClick={() => onSelect(item.ref)} className="self-start text-[12px] font-medium text-accent hover:underline">
-          Show on map
+          {t("ins.show")}
         </button>
       )}
     </li>
@@ -68,12 +70,12 @@ function Insights({ data, onSelect }) {
       <div className="flex flex-col gap-2">
         <h3 className="flex items-center gap-2 font-display text-lg font-semibold tracking-wide uppercase">
           <span className="rounded-full bg-warn-soft px-2 py-0.5 font-sans text-[11px] tracking-normal text-warn normal-case">
-            {data.needs.length}
+            {num(data.needs.length)}
           </span>
-          Needs
+          {t("ins.needs")}
         </h3>
         {data.needs.length === 0 ? (
-          <p className="text-[13px] text-muted">Nothing needs action for these filters.</p>
+          <p className="text-[13px] text-muted">{t("ins.noNeeds")}</p>
         ) : (
           <ul className="flex flex-col gap-3">
             {data.needs.map((n) => <Insight key={n.key} item={n} kind="need" onSelect={onSelect} />)}
@@ -83,12 +85,12 @@ function Insights({ data, onSelect }) {
       <div className="flex flex-col gap-2 border-t border-line pt-4">
         <h3 className="flex items-center gap-2 font-display text-lg font-semibold tracking-wide uppercase">
           <span className="rounded-full bg-good-soft px-2 py-0.5 font-sans text-[11px] tracking-normal text-good normal-case">
-            {data.chances.length}
+            {num(data.chances.length)}
           </span>
-          Chances
+          {t("ins.chances")}
         </h3>
         {data.chances.length === 0 ? (
-          <p className="text-[13px] text-muted">No opportunities spotted for these filters.</p>
+          <p className="text-[13px] text-muted">{t("ins.noChances")}</p>
         ) : (
           <ul className="flex flex-col gap-3">
             {data.chances.map((c) => <Insight key={c.key} item={c} kind="chance" onSelect={onSelect} />)}
@@ -100,9 +102,9 @@ function Insights({ data, onSelect }) {
 }
 
 function PhasePill({ s }) {
-  if (s.phase === "arrived") return <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-muted">Arrived</span>;
-  if (s.is_delayed) return <span className="rounded-full bg-bad-soft px-2 py-0.5 text-[11px] font-semibold text-bad">Late</span>;
-  return <span className="rounded-full bg-good-soft px-2 py-0.5 text-[11px] font-semibold text-good">At sea</span>;
+  if (s.phase === "arrived") return <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-muted">{t("pill.arrived")}</span>;
+  if (s.is_delayed) return <span className="rounded-full bg-bad-soft px-2 py-0.5 text-[11px] font-semibold text-bad">{t("pill.late")}</span>;
+  return <span className="rounded-full bg-good-soft px-2 py-0.5 text-[11px] font-semibold text-good">{t("pill.atSea")}</span>;
 }
 
 function ShipmentTable({ shipments, selected, onSelect, now }) {
@@ -110,15 +112,15 @@ function ShipmentTable({ shipments, selected, onSelect, now }) {
     <div className="overflow-x-auto rounded-md border border-line bg-surface">
       <table className="w-full min-w-[760px] text-[13px]">
         <thead>
-          <tr className="border-b border-line text-left">
-            {["Container", "Carrier", "Vessel", "Route", "Boxes", "ETA / arrived", "Status"].map((h) => (
-              <th key={h} className="label px-3 py-2.5 font-semibold">{h}</th>
+          <tr className="border-b border-line text-start">
+            {["container", "carrier", "vessel", "route", "boxes", "when", "status"].map((h) => (
+              <th key={h} className="label px-3 py-2.5 font-semibold">{t(`table.${h}`)}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {shipments.map((s) => {
-            const t = arrivalTime(s);
+            const at = arrivalTime(s);
             return (
               <tr
                 key={s.container_number}
@@ -132,18 +134,18 @@ function ShipmentTable({ shipments, selected, onSelect, now }) {
                     {s.carrier}
                   </span>
                 </td>
-                <td className="px-3 py-2">{s.vessel?.name ?? <span className="text-muted">Discharged</span>}</td>
-                <td className="px-3 py-2">{port(s.origin)} → {port(s.destination)}</td>
-                <td className="num px-3 py-2 font-mono">{s.containers.length} × {s.containers[0]?.size_type ?? "?"}</td>
+                <td className="px-3 py-2">{s.vessel?.name ?? <span className="text-muted">{t("table.discharged")}</span>}</td>
+                <td className="px-3 py-2">{port(s.origin)} <Arrow /> {port(s.destination)}</td>
+                <td className="num px-3 py-2 font-mono">{num(s.containers.length)} × {s.containers[0]?.size_type ?? "?"}</td>
                 <td className="num px-3 py-2 font-mono">
-                  {fmtDate(s.ata || s.eta)} <span className="text-muted">({fmtDays(t - now)})</span>
+                  {fmtDate(s.ata || s.eta)} <span className="text-muted">({fmtDays(at - now)})</span>
                 </td>
                 <td className="px-3 py-2"><PhasePill s={s} /></td>
               </tr>
             );
           })}
           {shipments.length === 0 && (
-            <tr><td colSpan={7} className="px-3 py-6 text-center text-muted">No shipments match these filters.</td></tr>
+            <tr><td colSpan={7} className="px-3 py-6 text-center text-muted">{t("table.empty")}</td></tr>
           )}
         </tbody>
       </table>
@@ -158,20 +160,20 @@ function Detail({ s, onClose }) {
         <div className="min-w-0">
           <div className="label">{s.carrier} · {s.sealine}</div>
           <h3 className="font-mono text-lg font-medium">{s.container_number}</h3>
-          <p className="text-[13px] text-muted">{s.origin} → {s.destination}</p>
+          <p className="text-[13px] text-muted">{s.origin} <Arrow /> {s.destination}</p>
         </div>
         <button type="button" onClick={onClose} className="rounded-sm border border-line px-2 py-1 text-[12px] hover:border-muted">
-          Close
+          {t("detail.close")}
         </button>
       </header>
       <dl className="grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-4">
-        <div><dt className="text-muted">Vessel</dt><dd>{s.vessel?.name ?? "Discharged"}</dd></div>
-        <div><dt className="text-muted">IMO</dt><dd className="font-mono">{s.vessel?.imo ?? "n/a"}</dd></div>
-        <div><dt className="text-muted">{s.ata ? "Arrived" : "ETA"}</dt><dd className="font-mono">{fmtDate(s.ata || s.eta, { day: "numeric", month: "short", year: "numeric" })}</dd></div>
-        <div><dt className="text-muted">Transit</dt><dd className="font-mono">{s.total_days ?? "?"} days{s.remaining_days ? `, ${s.remaining_days} left` : ""}</dd></div>
+        <div><dt className="text-muted">{t("detail.vessel")}</dt><dd>{s.vessel?.name ?? t("table.discharged")}</dd></div>
+        <div><dt className="text-muted">{t("detail.imo")}</dt><dd className="font-mono">{s.vessel?.imo ?? t("na")}</dd></div>
+        <div><dt className="text-muted">{s.ata ? t("detail.arrived") : t("detail.eta")}</dt><dd className="font-mono">{fmtDate(s.ata || s.eta, { day: "numeric", month: "short", year: "numeric" })}</dd></div>
+        <div><dt className="text-muted">{t("detail.transit")}</dt><dd className="font-mono">{t("detail.transitDays", { n: s.total_days ?? "?" })}{s.remaining_days ? ` · ${t("detail.left", { n: s.remaining_days })}` : ""}</dd></div>
       </dl>
       <div className="flex flex-col gap-1.5">
-        <h4 className="label">Boxes</h4>
+        <h4 className="label">{t("detail.boxes")}</h4>
         <ul className="flex flex-wrap gap-1.5">
           {s.containers.map((c) => (
             <li key={c.number} className="rounded-sm border border-line px-2 py-0.5 font-mono text-[12px]">
@@ -181,7 +183,7 @@ function Detail({ s, onClose }) {
         </ul>
       </div>
       <div className="flex flex-col gap-1.5">
-        <h4 className="label">Events</h4>
+        <h4 className="label">{t("detail.events")}</h4>
         <ol className="flex flex-col">
           {s.events.map((e, i) => (
             <li key={i} className="grid grid-cols-[5.5rem_1rem_1fr] gap-2 text-[13px]">
@@ -193,7 +195,7 @@ function Detail({ s, onClose }) {
               <span className="pb-2">
                 {e.description}
                 <span className="text-muted">{[e.location, e.vessel].filter(Boolean).length ? ` · ${[e.location, e.vessel].filter(Boolean).join(" · ")}` : ""}</span>
-                {!e.is_actual && <span className="text-muted"> (planned)</span>}
+                {!e.is_actual && <span className="text-muted"> {t("detail.planned")}</span>}
               </span>
             </li>
           ))}
@@ -205,6 +207,7 @@ function Detail({ s, onClose }) {
 
 export default function TrackingPage({ offer, matrix }) {
   const theme = useTheme();
+  const { lang } = useLang();
   const [snapshot, setSnapshot] = useState(null);
   const [filters, setFilters] = useState({ carriers: new Set(), phase: "all", delayedOnly: false, port: "all", query: "" });
   const [selected, setSelected] = useState(null);
@@ -219,7 +222,7 @@ export default function TrackingPage({ offer, matrix }) {
   const carriers = CARRIER_ORDER.filter((c) => all.some((s) => s.carrier === c));
   const ports = [...new Set(all.flatMap((s) => [port(s.origin), port(s.destination)]))].sort();
   const k = kpis(shown, now);
-  const found = useMemo(() => insights(shown, now, { offer, matrix }), [shown, now, offer, matrix]);
+  const found = useMemo(() => insights(shown, now, { offer, matrix }), [shown, now, offer, matrix, lang]);
   const select = useCallback((id) => setSelected(id), []);
   const sel = shown.find((s) => s.container_number === selected);
 
@@ -231,31 +234,32 @@ export default function TrackingPage({ offer, matrix }) {
       return { ...f, carriers: next };
     });
 
-  if (!snapshot) return <p className="py-8 text-muted">Loading tracked containers…</p>;
+  if (!snapshot) return <p className="py-8 text-muted">{t("track.loading")}</p>;
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <div className="label">Live tracking</div>
-          <h1 className="font-display text-3xl leading-tight font-bold tracking-wide uppercase sm:text-4xl">Containers & vessels</h1>
+          <div className="label">{t("track.eyebrow")}</div>
+          <h1 className="font-display text-3xl leading-tight font-bold tracking-wide uppercase sm:text-4xl">{t("track.title")}</h1>
         </div>
         <span className="text-[12px] text-muted">
-          {snapshot.source === "live" ? "Live from Traqo" : "Example fleet. Set TRAQO_API_KEY and TRACKING_WATCHLIST for live data"}
-          {" · "}updated {new Date(snapshot.generated_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+          {snapshot.source === "live" ? t("track.live") : t("track.example")}
+          {" · "}
+          {t("track.updated", { time: time(snapshot.generated_at) })}
         </span>
       </div>
 
       {snapshot.errors?.length > 0 && (
-        <ul className="list-disc rounded-sm bg-bad-soft py-2 pr-3 pl-8 text-[13px] text-bad">
+        <ul className="list-disc rounded-sm bg-bad-soft py-2 pe-3 ps-8 text-[13px] text-bad">
           {snapshot.errors.map((e) => <li key={e}>{e}</li>)}
         </ul>
       )}
 
       <div className="flex flex-col gap-3 rounded-md border border-line bg-surface p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="label mr-1">Carrier</span>
-          <Chip active={filters.carriers.size === 0} onClick={() => set({ carriers: new Set() })}>All</Chip>
+          <span className="label me-1">{t("filter.carrier")}</span>
+          <Chip active={filters.carriers.size === 0} onClick={() => set({ carriers: new Set() })}>{t("filter.all")}</Chip>
           {carriers.map((c) => (
             <Chip key={c} active={filters.carriers.has(c)} onClick={() => toggleCarrier(c)} swatch={carrierColor(c)}>
               {c}
@@ -263,47 +267,44 @@ export default function TrackingPage({ offer, matrix }) {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="label mr-1">Status</span>
+          <span className="label me-1">{t("filter.status")}</span>
           {PHASES.map((p) => (
-            <Chip key={p.id} active={filters.phase === p.id} onClick={() => set({ phase: p.id })}>{p.label}</Chip>
+            <Chip key={p.id} active={filters.phase === p.id} onClick={() => set({ phase: p.id })}>{t(p.label)}</Chip>
           ))}
-          <Chip active={filters.delayedOnly} onClick={() => set({ delayedOnly: !filters.delayedOnly })}>Late only</Chip>
-          <label htmlFor="port-filter" className="label mr-1 ml-2">Port</label>
+          <Chip active={filters.delayedOnly} onClick={() => set({ delayedOnly: !filters.delayedOnly })}>{t("filter.lateOnly")}</Chip>
+          <label htmlFor="port-filter" className="label ms-2 me-1">{t("filter.port")}</label>
           <select
             id="port-filter"
             value={filters.port}
             onChange={(e) => set({ port: e.target.value })}
             className="rounded-sm border border-line bg-surface px-2 py-1 text-[13px]"
           >
-            <option value="all">All ports</option>
+            <option value="all">{t("filter.allPorts")}</option>
             {ports.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
-          <label htmlFor="track-search" className="sr-only">Search container, vessel or port</label>
+          <label htmlFor="track-search" className="sr-only">{t("filter.search")}</label>
           <input
             id="track-search"
             type="search"
             value={filters.query}
             onChange={(e) => set({ query: e.target.value })}
-            placeholder="Container, vessel or port"
+            placeholder={t("filter.search")}
             className="min-w-0 flex-1 basis-48 rounded-sm border border-line bg-surface px-2.5 py-1 text-[13px]"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Boxes tracked" value={k.boxes} note={`${shown.length} shipments`} />
-        <Kpi label="Vessels at sea" value={k.vessels} note={`${k.activeCount} shipments under way`} />
-        <Kpi label="Running late" value={k.delayed} note={k.activeCount ? `${Math.round((k.delayed / k.activeCount) * 100)}% of active shipments` : "No active shipments"} tone={k.delayed ? "text-bad" : ""} />
-        <Kpi label="Landing in 7 days" value={k.arrivingSoon} note="boxes to clear and truck" />
+        <Kpi label={t("kpi.boxes")} value={k.boxes} note={t.plural("kpi.shipments", shown.length)} />
+        <Kpi label={t("kpi.vessels")} value={k.vessels} note={t.plural("kpi.underWay", k.activeCount)} />
+        <Kpi label={t("kpi.late")} value={k.delayed} note={k.activeCount ? t("kpi.lateShare", { pct: pct((k.delayed / k.activeCount) * 100, 0) }) : t("kpi.noActive")} tone={k.delayed ? "text-bad" : ""} />
+        <Kpi label={t("kpi.soon")} value={k.arrivingSoon} note={t("kpi.soonNote")} />
       </div>
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-2">
-          <TrackingMap shipments={shown} selected={sel ? selected : null} onSelect={select} theme={theme} />
-          <p className="text-[12px] text-muted">
-            Dots are colored by carrier. A red ring marks a late vessel, and faded dots are boxes already discharged. Click a dot
-            or a table row to follow its route.
-          </p>
+          <TrackingMap shipments={shown} selected={sel ? selected : null} onSelect={select} theme={theme} lang={lang} />
+          <p className="text-[12px] text-muted">{t("map.help")}</p>
         </div>
         <Insights data={found} onSelect={select} />
       </div>

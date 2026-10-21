@@ -1,4 +1,5 @@
-import { STRATEGY_LABEL, boxCount, ddPerDay, isoCode, margin, money } from "../lib/matrix";
+import { pct, t } from "../lib/i18n";
+import { boxCount, ddPerDay, isoCode, margin, money, strategyLabel } from "../lib/matrix";
 
 const RISK_STYLE = {
   low: "bg-good-soft text-good",
@@ -9,7 +10,7 @@ const RISK_STYLE = {
 export function RiskPill({ level }) {
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${RISK_STYLE[level]}`}>
-      {level[0].toUpperCase() + level.slice(1)} deadline risk
+      {t(`risk.${level}`)}
     </span>
   );
 }
@@ -38,18 +39,18 @@ function FormulaRow({ label, value, currency, op, swatch, strong }) {
 
 function MarginFormula({ pm }) {
   const m = margin(pm);
-  const pct = (v) => `${Math.max(0, (v / m.revenue) * 100)}%`;
+  const share = (v) => `${Math.max(0, (v / m.revenue) * 100)}%`;
   return (
-    <Section title="Profit margin formula">
+    <Section title={t("card.formula")}>
       <div className="flex flex-col gap-1.5 text-[13px]">
-        <FormulaRow label="Client revenue" value={m.revenue} currency={pm.currency} />
-        <FormulaRow op="−" label="Carrier freight" value={m.freight} currency={pm.currency} swatch="bg-freight" />
-        <FormulaRow op="−" label="Container rent" value={m.rent} currency={pm.currency} swatch="bg-rent" />
-        <FormulaRow op="−" label="Port fees" value={m.port} currency={pm.currency} swatch="bg-port" />
+        <FormulaRow label={t("card.revenue")} value={m.revenue} currency={pm.currency} />
+        <FormulaRow op="−" label={t("card.freight")} value={m.freight} currency={pm.currency} swatch="bg-freight" />
+        <FormulaRow op="−" label={t("card.rent")} value={m.rent} currency={pm.currency} swatch="bg-rent" />
+        <FormulaRow op="−" label={t("card.port")} value={m.port} currency={pm.currency} swatch="bg-port" />
         <div className="my-1 border-t border-dashed border-line" />
         <FormulaRow
           op="="
-          label="Profit margin"
+          label={t("card.profit")}
           value={m.value}
           currency={pm.currency}
           swatch={m.value >= 0 ? "bg-good" : "bg-bad"}
@@ -58,11 +59,11 @@ function MarginFormula({ pm }) {
       </div>
       {/* One bar = client revenue, split into what each cost takes and what is left. */}
       <div className="flex h-2.5 overflow-hidden rounded-sm bg-sunken" role="img"
-        aria-label={`Costs take ${(100 - m.pct).toFixed(0)}% of revenue`}>
-        <span className="bg-freight" style={{ width: pct(m.freight) }} />
-        <span className="bg-rent" style={{ width: pct(m.rent) }} />
-        <span className="bg-port" style={{ width: pct(m.port) }} />
-        <span className="bg-good" style={{ width: pct(m.value) }} />
+        aria-label={t("card.costShare", { pct: pct(100 - m.pct, 0) })}>
+        <span className="bg-freight" style={{ width: share(m.freight) }} />
+        <span className="bg-rent" style={{ width: share(m.rent) }} />
+        <span className="bg-port" style={{ width: share(m.port) }} />
+        <span className="bg-good" style={{ width: share(m.value) }} />
       </div>
     </Section>
   );
@@ -71,7 +72,7 @@ function MarginFormula({ pm }) {
 function Equipment({ equipment }) {
   const util = Number(equipment.utilization_pct);
   return (
-    <Section title="Equipment configuration">
+    <Section title={t("card.equipment")}>
       <ul className="flex flex-col gap-2">
         {equipment.containers.map((c, i) => (
           <li key={i} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -82,24 +83,23 @@ function Equipment({ equipment }) {
             {isoCode(c) && (
               <span className="rounded-sm border border-line px-1 font-mono text-[11px] text-muted">{isoCode(c)}</span>
             )}
-            <span className="w-full pl-7 text-[13px] text-muted">
-              {c.provider}
-              {c.leased ? " · leased" : " · carrier-owned"}
+            <span className="w-full ps-7 text-[13px] text-muted">
+              {c.provider} · {c.leased ? t("card.leased") : t("card.owned")}
             </span>
           </li>
         ))}
       </ul>
       <div className="flex flex-col gap-1">
         <div className="flex justify-between text-[13px]">
-          <span className="text-muted">Cargo fill (bin packing)</span>
-          <span className="num font-mono">{util.toFixed(1)}%</span>
+          <span className="text-muted">{t("card.fill")}</span>
+          <span className="num font-mono">{pct(util)}</span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-sunken">
           <div className="h-full rounded-full bg-ink" style={{ width: `${util}%` }} />
         </div>
       </div>
       <p className="text-[13px] text-muted">
-        Carriers: <span className="text-ink">{equipment.carriers.join(" + ")}</span>
+        {t("card.carriers")} <span className="text-ink">{equipment.carriers.join(" + ")}</span>
       </p>
     </Section>
   );
@@ -108,34 +108,33 @@ function Equipment({ equipment }) {
 function Risk({ option, currency }) {
   const r = option.risk;
   const dd = ddPerDay(option);
-  const days = (v) => (v == null ? "n/a" : `${v} days`);
+  const days = (v) => (v == null ? t("na") : t("card.days", { n: v }));
   return (
-    <Section title="Risk analysis">
+    <Section title={t("card.risk")}>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
         <div>
-          <dt className="text-muted">Free time, origin</dt>
+          <dt className="text-muted">{t("card.freeOrigin")}</dt>
           <dd className="num font-mono">{days(r.origin_free_days)}</dd>
         </div>
         <div>
-          <dt className="text-muted">Free time, destination</dt>
+          <dt className="text-muted">{t("card.freeDest")}</dt>
           <dd className="num font-mono">{days(r.destination_free_days)}</dd>
         </div>
         <div>
-          <dt className="text-muted">Detention / box / day</dt>
+          <dt className="text-muted">{t("card.detention")}</dt>
           <dd className="num font-mono">{money(r.detention_fee_per_day, currency)}</dd>
         </div>
         <div>
-          <dt className="text-muted">Demurrage / box / day</dt>
+          <dt className="text-muted">{t("card.demurrage")}</dt>
           <dd className="num font-mono">{money(r.demurrage_fee_per_day, currency)}</dd>
         </div>
       </dl>
       {dd != null && (
         <p className="rounded-sm bg-warn-soft px-3 py-2 text-[13px] text-warn">
-          Each day past free time costs <strong className="num font-mono">{money(dd, currency)}</strong> across{" "}
-          {boxCount(option.equipment)} boxes.
+          {t("card.ddPerDay", { amount: money(dd, currency), n: boxCount(option.equipment) })}
         </p>
       )}
-      <ul className="flex list-disc flex-col gap-1.5 pl-5 text-[13px] marker:text-muted">
+      <ul className="flex list-disc flex-col gap-1.5 ps-5 text-[13px] marker:text-muted">
         {r.pitfalls.map((p, i) => (
           <li key={i}>{p}</li>
         ))}
@@ -164,10 +163,10 @@ export default function OptionCard({ option, recommended }) {
         <div className="flex min-w-0 flex-col gap-0.5">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-display text-xl leading-tight font-semibold tracking-wide uppercase">
-              {STRATEGY_LABEL[option.strategy]}
+              {strategyLabel(option.strategy)}
             </h3>
             {recommended && (
-              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">Recommended</span>
+              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t("card.recommended")}</span>
             )}
           </div>
           <p className="text-[13px] text-muted">{option.summary}</p>
@@ -176,16 +175,14 @@ export default function OptionCard({ option, recommended }) {
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="label">Margin</div>
+          <div className="label">{t("card.margin")}</div>
           <div className={`num font-display text-4xl leading-none font-bold ${m.value >= 0 ? "text-good" : "text-bad"}`}>
             {money(m.value, pm.currency)}
           </div>
-          <div className="num mt-1 font-mono text-[13px] text-muted">{m.pct?.toFixed(1)}% of revenue</div>
+          <div className="num mt-1 font-mono text-[13px] text-muted">{t("card.ofRevenue", { pct: pct(m.pct) })}</div>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <span className="num font-mono text-sm">
-            <strong className="text-lg">{option.transit_days}</strong> days transit
-          </span>
+          <span className="num font-mono text-sm">{t("card.transit", { n: option.transit_days })}</span>
           <RiskPill level={option.risk.deadline_risk} />
         </div>
       </div>

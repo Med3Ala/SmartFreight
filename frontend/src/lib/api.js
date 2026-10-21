@@ -1,5 +1,6 @@
 import demo from "../demo.json";
 import demoTracking from "../demoTracking.json";
+import { t } from "./i18n";
 import { checkOffline } from "./matrix";
 
 async function getJson(url, init) {
@@ -28,7 +29,7 @@ export async function checkAnswer(text) {
   try {
     parsed = JSON.parse(text);
   } catch (e) {
-    return { errors: [`That isn't valid JSON: ${e.message}`] };
+    return { errors: [t("check.badJson", { msg: e.message })] };
   }
   try {
     const res = await getJson("/api/matrix/validate", {

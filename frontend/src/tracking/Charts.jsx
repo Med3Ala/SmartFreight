@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { date, num, t } from "../lib/i18n";
 import { CARRIER_ORDER, arrivalsByDay, carrierColor, carrierReliability, emptiesPipeline, sizeMix } from "./model";
 
 function Panel({ title, note, children, legend }) {
@@ -41,17 +42,17 @@ export function ArrivalsChart({ shipments, now }) {
 
   return (
     <Panel
-      title="Arrivals, next 14 days"
-      note="Boxes due each day. Plan trucks, customs and free time around the peaks."
+      title={t("chart.arrivals")}
+      note={t("chart.arrivalsNote")}
       legend={carriers.length > 1 && <CarrierLegend carriers={carriers} />}
     >
       <div className="relative">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Boxes arriving per day by carrier">
-          {ticks.map((t) => (
-            <g key={t}>
-              <line x1={padL} x2={W} y1={y(t)} y2={y(t)} stroke="var(--line)" strokeWidth="1" />
-              <text x={padL - 6} y={y(t) + 4} textAnchor="end" fontSize="10" fill="var(--muted)" className="num">
-                {t}
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={t("chart.arrivalsLabel")}>
+          {ticks.map((tick) => (
+            <g key={tick}>
+              <line x1={padL} x2={W} y1={y(tick)} y2={y(tick)} stroke="var(--line)" strokeWidth="1" />
+              <text x={padL - 6} y={y(tick) + 4} textAnchor="end" fontSize="10" fill="var(--muted)" className="num">
+                {num(tick)}
               </text>
             </g>
           ))}
@@ -75,7 +76,7 @@ export function ArrivalsChart({ shipments, now }) {
                 })}
                 {i % 2 === 0 && (
                   <text x={padL + i * bw + bw / 2} y={H - 6} textAnchor="middle" fontSize="10" fill="var(--muted)" className="num">
-                    {d.date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    {date(d.date)}
                   </text>
                 )}
               </g>
@@ -88,15 +89,15 @@ export function ArrivalsChart({ shipments, now }) {
             className="pointer-events-none absolute top-0 z-10 min-w-36 rounded-sm border border-line bg-surface px-2.5 py-2 text-[12px] shadow-sm"
             style={{ left: `${Math.min(70, ((padL + hover * bw) / W) * 100)}%` }}
           >
-            <div className="font-semibold">{days[hover].date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</div>
-            {Object.keys(days[hover].byCarrier).length === 0 && <div className="text-muted">No arrivals</div>}
+            <div className="font-semibold">{date(days[hover].date, { weekday: "short", day: "numeric", month: "short" })}</div>
+            {Object.keys(days[hover].byCarrier).length === 0 && <div className="text-muted">{t("chart.noArrivals")}</div>}
             {CARRIER_ORDER.filter((c) => days[hover].byCarrier[c]).map((c) => (
               <div key={c} className="flex items-center justify-between gap-3">
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block size-2 rounded-sm" style={{ background: carrierColor(c) }} />
                   {c}
                 </span>
-                <span className="num font-mono">{days[hover].byCarrier[c]}</span>
+                <span className="num font-mono">{num(days[hover].byCarrier[c])}</span>
               </div>
             ))}
           </div>
@@ -111,7 +112,7 @@ export function ReliabilityChart({ shipments }) {
   const rows = carrierReliability(shipments);
   const max = Math.max(1, ...rows.map((r) => r.total));
   return (
-    <Panel title="Carrier reliability" note="Tracked shipments on time vs flagged late. Few shipments make this a hint, not a verdict.">
+    <Panel title={t("chart.reliability")} note={t("chart.reliabilityNote")}>
       <ul className="flex flex-col gap-2.5">
         {rows.map((r) => (
           <li key={r.carrier} className="grid grid-cols-[6.5rem_1fr_auto] items-center gap-3 text-[13px]">
@@ -119,19 +120,19 @@ export function ReliabilityChart({ shipments }) {
               <span className="inline-block size-2.5 shrink-0 rounded-sm" style={{ background: carrierColor(r.carrier) }} />
               {r.carrier}
             </span>
-            <span className="flex h-2.5 gap-[2px]" title={`${r.total - r.late} on time, ${r.late} late`}>
-              <span className="rounded-l-sm bg-ink/70" style={{ width: `${((r.total - r.late) / max) * 100}%` }} />
-              {r.late > 0 && <span className="rounded-r-sm bg-bad" style={{ width: `${(r.late / max) * 100}%` }} />}
+            <span className="flex h-2.5 gap-[2px]" title={t("chart.onTimeOf", { ok: r.total - r.late, total: r.total })}>
+              <span className="rounded-s-sm bg-ink/70" style={{ width: `${((r.total - r.late) / max) * 100}%` }} />
+              {r.late > 0 && <span className="rounded-e-sm bg-bad" style={{ width: `${(r.late / max) * 100}%` }} />}
             </span>
             <span className="num font-mono text-[12px] text-muted">
-              {r.total - r.late}/{r.total} on time
+              {t("chart.onTimeOf", { ok: r.total - r.late, total: r.total })}
             </span>
           </li>
         ))}
       </ul>
       <div className="flex gap-4 text-[12px] text-muted">
-        <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm bg-ink/70" />On time</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm bg-bad" />Late</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm bg-ink/70" />{t("chart.onTime")}</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm bg-bad" />{t("chart.late")}</span>
       </div>
     </Panel>
   );
@@ -142,8 +143,8 @@ export function EmptiesChart({ shipments, now }) {
   const rows = emptiesPipeline(shipments, now);
   const max = Math.max(1, ...rows.map((r) => r.landed + r.due));
   return (
-    <Panel title="Empties pipeline" note="Boxes discharged in the last 5 days or due in the next 10. These turn into empty equipment near the port.">
-      {rows.length === 0 && <p className="text-[13px] text-muted">No boxes landing in this window.</p>}
+    <Panel title={t("chart.empties")} note={t("chart.emptiesNote")}>
+      {rows.length === 0 && <p className="text-[13px] text-muted">{t("chart.noEmpties")}</p>}
       <ul className="flex flex-col gap-3">
         {rows.map((r) => (
           <li key={r.port} className="flex flex-col gap-1 text-[13px]">
@@ -151,7 +152,7 @@ export function EmptiesChart({ shipments, now }) {
               <span className="font-medium">{r.port}</span>
               <span className="num font-mono text-[12px] text-muted">{sizeMix(r.shipments)}</span>
             </div>
-            <span className="flex h-2.5 gap-[2px]" title={`${r.landed} landed, ${r.due} due`}>
+            <span className="flex h-2.5 gap-[2px]" title={`${t("chart.landed")}: ${num(r.landed)} · ${t("chart.due")}: ${num(r.due)}`}>
               {r.landed > 0 && <span className="rounded-sm bg-good" style={{ width: `${(r.landed / max) * 100}%` }} />}
               {r.due > 0 && <span className="rounded-sm bg-good/40" style={{ width: `${(r.due / max) * 100}%` }} />}
             </span>
@@ -159,8 +160,8 @@ export function EmptiesChart({ shipments, now }) {
         ))}
       </ul>
       <div className="flex gap-4 text-[12px] text-muted">
-        <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm bg-good" />Landed</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm bg-good/40" />Due</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm bg-good" />{t("chart.landed")}</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-sm bg-good/40" />{t("chart.due")}</span>
       </div>
     </Panel>
   );

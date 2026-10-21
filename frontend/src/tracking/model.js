@@ -1,5 +1,6 @@
 // Reading the tracking snapshot: carrier identity, date windows, and the needs/chances insights.
 
+import { date, num, t } from "../lib/i18n";
 import { money } from "../lib/matrix";
 
 // Fixed carrier order so a carrier keeps its colour whatever the filters show.
@@ -11,19 +12,16 @@ export function carrierColor(carrier) {
 }
 
 export const DAY = 86_400_000;
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 export const port = (place) => (place || "").split(",")[0].trim();
 export const boxes = (s) => s.containers.length || 1;
 export const arrivalTime = (s) => Date.parse(s.ata || s.eta);
 
-export function fmtDate(iso, opts = { day: "numeric", month: "short" }) {
-  return iso ? new Date(iso).toLocaleDateString("en-GB", opts) : "n/a";
-}
+export const fmtDate = date;
 
 export function fmtDays(ms) {
   const d = Math.round(ms / DAY);
-  if (d === 0) return "today";
-  return d > 0 ? `in ${d} d` : `${-d} d ago`;
+  if (d === 0) return t("when.today");
+  return d > 0 ? t("when.in", { n: d }) : t("when.ago", { n: -d });
 }
 
 export function sizeMix(shipments) {
@@ -31,18 +29,18 @@ export function sizeMix(shipments) {
   for (const s of shipments) for (const c of s.containers) mix[c.size_type] = (mix[c.size_type] || 0) + 1;
   return Object.entries(mix)
     .sort((a, b) => b[1] - a[1])
-    .map(([size, n]) => `${n} × ${size}`)
+    .map(([size, n]) => `${num(n)} × ${size}`)
     .join(", ");
 }
 
 // Matrix equipment ("40ft" + "High Cube Dry Van") to the size type carriers report ("40HC").
 export function sizeTypeOf(line) {
   const ft = line.size.replace("ft", "");
-  const t = line.type.toLowerCase();
-  if (t.includes("reefer")) return `${ft}${t.includes("high cube") ? "RH" : "RF"}`;
-  if (t.includes("high cube")) return `${ft}HC`;
-  if (t.includes("open top")) return `${ft}OT`;
-  if (t.includes("flat")) return `${ft}FR`;
+  const type = line.type.toLowerCase();
+  if (type.includes("reefer")) return `${ft}${type.includes("high cube") ? "RH" : "RF"}`;
+  if (type.includes("high cube")) return `${ft}HC`;
+  if (type.includes("open top")) return `${ft}OT`;
+  if (type.includes("flat")) return `${ft}FR`;
   return `${ft}DV`;
 }
 
@@ -100,9 +98,9 @@ export function carrierReliability(shipments) {
 export function emptiesPipeline(shipments, now) {
   const rows = {};
   for (const s of shipments) {
-    const t = arrivalTime(s);
-    const landed = s.phase === "arrived" && now - t <= 5 * DAY;
-    const due = s.phase !== "arrived" && t - now <= 10 * DAY;
+    const at = arrivalTime(s);
+    const landed = s.phase === "arrived" && now - at <= 5 * DAY;
+    const due = s.phase !== "arrived" && at - now <= 10 * DAY;
     if (!landed && !due) continue;
     const p = port(s.destination);
     const r = (rows[p] ||= { port: p, landed: 0, due: 0, shipments: [] });
@@ -120,8 +118,8 @@ export function insights(shipments, now, { offer, matrix } = {}) {
   for (const s of shipments.filter((s) => s.is_delayed && s.phase !== "arrived")) {
     needs.push({
       key: `late-${s.container_number}`,
-      title: `${s.carrier} box to ${port(s.destination)} is running late`,
-      body: `${s.container_number} on ${s.vessel?.name ?? "its vessel"} is now due ${fmtDate(s.eta)}. Tell the consignee and move the haulage booking.`,
+      title: t("ins.late.title", { carrier: s.carrier, port: port(s.destination) }),
+      body: t("ins.late.body", { container: s.container_number, vessel: s.vessel?.name ?? t("ins.its"), date: fmtDate(s.eta) }),
       ref: s.container_number,
     });
   }
@@ -134,8 +132,8 @@ export function insights(shipments, now, { offer, matrix } = {}) {
   for (const [p, list] of Object.entries(soon)) {
     needs.push({
       key: `soon-${p}`,
-      title: `${plural(list.reduce((n, s) => n + boxes(s), 0), "box lands", "boxes land")} at ${p} within 3 days`,
-      body: `${sizeMix(list)}. Book trucks and customs clearance now so the free days at ${p} aren't lost.`,
+      title: t.plural("ins.soon.title", list.reduce((n, s) => n + boxes(s), 0), { port: p }),
+      body: t("ins.soon.body", { mix: sizeMix(list), port: p }),
     });
   }
 
@@ -143,14 +141,14 @@ export function insights(shipments, now, { offer, matrix } = {}) {
     if (r.total >= 2 && r.late / r.total >= 0.5) {
       needs.push({
         key: `rel-${r.carrier}`,
-        title: `${r.carrier}: ${r.late} of ${r.total} shipments late`,
-        body: `Add buffer days before choosing ${r.carrier} for a tight deadline, or keep it to Option A (lowest cost).`,
+        title: t("ins.unreliable.title", { carrier: r.carrier, late: r.late, total: r.total }),
+        body: t("ins.unreliable.body", { carrier: r.carrier }),
       });
     } else if (r.total >= 2 && r.late === 0) {
       chances.push({
         key: `rel-${r.carrier}`,
-        title: `${r.carrier}: all ${r.total} tracked shipments on time`,
-        body: `A safe pick for Option B (fastest transit) on lanes it already serves.`,
+        title: t("ins.reliable.title", { carrier: r.carrier, total: r.total }),
+        body: t("ins.reliable.body"),
       });
     }
   }
@@ -172,10 +170,10 @@ export function insights(shipments, now, { offer, matrix } = {}) {
       const n = matches.reduce((k, s) => k + s.containers.filter((c) => needed.has(c.size_type)).length, 0);
       chances.push({
         key: "street-turn",
-        title: `${plural(n, "matching empty", "matching empties")} at ${origin} for ${offer.client_name}`,
-        body: `${sizeMix(matches)} from ${[...new Set(matches.map((s) => s.carrier))].join(", ")} land before the offer ships. Ask the carrier to release them for re-use instead of leasing from Container xChange${
-          leasedRent ? ` (Option A pays ${money(Number(leasedRent.container_rent_fee), leasedRent.currency)} in rent)` : ""
-        }.`,
+        title: t.plural("ins.street.title", n, { port: origin, client: offer.client_name }),
+        body:
+          t("ins.street.body", { mix: sizeMix(matches), carriers: [...new Set(matches.map((s) => s.carrier))].join(", ") }) +
+          (leasedRent ? t("ins.street.rent", { amount: money(Number(leasedRent.container_rent_fee), leasedRent.currency) }) : ""),
         tone: "accent",
       });
     }
@@ -186,8 +184,8 @@ export function insights(shipments, now, { offer, matrix } = {}) {
     if (n < 3) continue;
     chances.push({
       key: `empties-${r.port}`,
-      title: `${n} boxes free up at ${r.port} in the next 10 days`,
-      body: `${sizeMix(r.shipments)}. Once unpacked they are empties near the port: offer them for exports out of ${r.port}.`,
+      title: t("ins.empties.title", { n, port: r.port }),
+      body: t("ins.empties.body", { mix: sizeMix(r.shipments), port: r.port }),
     });
   }
 

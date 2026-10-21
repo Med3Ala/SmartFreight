@@ -3,6 +3,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { feature } from "topojson-client";
 import land from "world-atlas/land-110m.json";
+import { t } from "../lib/i18n";
 import { carrierColor, fmtDate, port } from "./model";
 
 const LAND = feature(land, land.objects.land);
@@ -21,16 +22,19 @@ function resolve(color) {
 }
 
 function tooltip(s) {
-  const when = s.phase === "arrived" ? `Arrived ${fmtDate(s.ata)}` : `ETA ${fmtDate(s.eta)}${s.is_delayed ? " · late" : ""}`;
+  const when =
+    s.phase === "arrived"
+      ? t("map.arrived", { date: fmtDate(s.ata) })
+      : t("map.eta", { date: fmtDate(s.eta) }) + (s.is_delayed ? ` · ${t("map.late")}` : "");
   const div = document.createElement("div");
   div.innerHTML = "<strong></strong><br><span></span><br><span></span>";
   div.children[0].textContent = `${s.carrier} · ${s.vessel?.name ?? s.container_number}`;
-  div.children[2].textContent = `${port(s.origin)} → ${port(s.destination)}`;
-  div.children[4].textContent = `${s.containers.length} box${s.containers.length === 1 ? "" : "es"} · ${when}`;
+  div.children[2].textContent = `${port(s.origin)} ${document.dir === "rtl" ? "←" : "→"} ${port(s.destination)}`;
+  div.children[4].textContent = `${t.plural("map.boxes", s.containers.length)} · ${when}`;
   return div;
 }
 
-export default function TrackingMap({ shipments, selected, onSelect, theme }) {
+export default function TrackingMap({ shipments, selected, onSelect, theme, lang }) {
   const el = useRef(null);
   const map = useRef(null);
   const layers = useRef(null);
@@ -99,7 +103,7 @@ export default function TrackingMap({ shipments, selected, onSelect, theme }) {
     } else if (points.length) {
       map.current.fitBounds(points, { padding: [40, 40], maxZoom: 5 });
     }
-  }, [shipments, selected, onSelect, theme]);
+  }, [shipments, selected, onSelect, theme, lang]);
 
-  return <div ref={el} className="h-[420px] w-full rounded-md border border-line" role="region" aria-label="Map of tracked vessels and containers" />;
+  return <div ref={el} className="h-[420px] w-full rounded-md border border-line" role="region" aria-label={t("map.label")} />;
 }

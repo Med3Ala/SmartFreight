@@ -1,21 +1,44 @@
 import { useEffect, useState } from "react";
 import CheckAnswer from "./components/CheckAnswer";
 import Glance from "./components/Glance";
+import Arrow from "./components/Arrow";
 import OptionCard from "./components/OptionCard";
 import { loadDashboard } from "./lib/api";
+import { LANGUAGES, date, num, t, useLang } from "./lib/i18n";
 import TrackingPage from "./tracking/TrackingPage";
 
-const VIEWS = [
-  { id: "matrix", label: "Best Formula Matrix" },
-  { id: "tracking", label: "Live tracking" },
-];
+const VIEWS = ["matrix", "tracking"];
 const viewFromHash = () => (location.hash === "#tracking" ? "tracking" : "matrix");
 
-const SOURCE = {
-  live: { label: "Live API", cls: "bg-good-soft text-good" },
-  example: { label: "Example data", cls: "bg-warn-soft text-warn" },
-  agent: { label: "Pasted agent answer", cls: "bg-accent-soft text-accent" },
+const SOURCE_STYLE = {
+  live: "bg-good-soft text-good",
+  example: "bg-warn-soft text-warn",
+  agent: "bg-accent-soft text-accent",
 };
+
+function LanguageSwitch() {
+  const { lang, setLang } = useLang();
+  return (
+    <div role="group" aria-label={t("nav.language")} className="flex rounded-sm border border-line p-0.5">
+      {LANGUAGES.map((l) => (
+        <button
+          key={l.id}
+          type="button"
+          lang={l.id}
+          title={l.name}
+          aria-label={l.name}
+          aria-pressed={lang === l.id}
+          onClick={() => setLang(l.id)}
+          className={`min-w-8 rounded-[3px] px-2 py-0.5 text-[12px] font-semibold ${
+            lang === l.id ? "bg-ink text-surface" : "text-muted hover:text-ink"
+          }`}
+        >
+          {l.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function Fact({ label, children }) {
   return (
@@ -28,31 +51,30 @@ function Fact({ label, children }) {
 
 function OfferPanel({ offer }) {
   const c = offer.cargo_details;
-  const deadline = new Date(offer.deadline);
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0">
-          <div className="label">Client offer · {offer.client_name}</div>
+          <div className="label">{t("offer.client", { client: offer.client_name })}</div>
           <h1 className="font-display text-3xl leading-tight font-bold tracking-wide uppercase sm:text-4xl">
-            {offer.origin_port} <span className="text-accent">→</span> {offer.destination_port}
+            {offer.origin_port} <span className="text-accent"><Arrow /></span> {offer.destination_port}
           </h1>
         </div>
-        <span className="rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold capitalize">
-          {offer.status}
+        <span className="rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold">
+          {t(`offer.status.${offer.status}`)}
         </span>
       </div>
       <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Fact label="Cargo">{c.commodity}</Fact>
-        <Fact label="Weight / volume">
+        <Fact label={t("offer.cargo")}>{c.commodity}</Fact>
+        <Fact label={t("offer.weightVolume")}>
           <span className="font-mono">
-            {(c.weight_kg / 1000).toFixed(1)} t · {c.volume_m3} m³
+            {num(c.weight_kg / 1000, { maximumFractionDigits: 1 })} t · {num(c.volume_m3)} m³
           </span>
         </Fact>
-        <Fact label="Hazmat">{c.hazmat ? "Yes, IMDG declared" : "No"}</Fact>
-        <Fact label="Deliver by">
+        <Fact label={t("offer.hazmat")}>{c.hazmat ? t("offer.hazmatYes") : t("offer.hazmatNo")}</Fact>
+        <Fact label={t("offer.deadline")}>
           <span className="font-mono">
-            {deadline.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+            {date(offer.deadline, { day: "2-digit", month: "short", year: "numeric" })}
           </span>
         </Fact>
       </dl>
@@ -61,6 +83,7 @@ function OfferPanel({ offer }) {
 }
 
 export default function App() {
+  useLang(); // re-render everything when the language changes
   const [data, setData] = useState(null);
   const [view, setView] = useState(viewFromHash);
 
@@ -75,7 +98,7 @@ export default function App() {
   }, []);
 
   if (!data) {
-    return <p className="p-8 text-muted">Loading the Best Formula Matrix…</p>;
+    return <p className="p-8 text-muted">{t("loading.matrix")}</p>;
   }
 
   const { offer, matrix, source } = data;
@@ -87,27 +110,30 @@ export default function App() {
         <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-3 pl-[max(16px,env(safe-area-inset-left,0px))] pr-[max(16px,env(safe-area-inset-right,0px))] py-3">
           <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
             <span className="font-display text-xl font-bold tracking-wider uppercase">SmartFreight</span>
-            <nav className="flex gap-1" aria-label="Views">
+            <nav className="flex gap-1" aria-label={t("nav.views")}>
               {VIEWS.map((v) => (
                 <a
-                  key={v.id}
-                  href={`#${v.id}`}
-                  onClick={() => setView(v.id)}
-                  aria-current={view === v.id ? "page" : undefined}
+                  key={v}
+                  href={`#${v}`}
+                  onClick={() => setView(v)}
+                  aria-current={view === v ? "page" : undefined}
                   className={`rounded-sm px-2.5 py-1 text-[13px] font-medium whitespace-nowrap ${
-                    view === v.id ? "bg-sunken text-ink" : "text-muted hover:text-ink"
+                    view === v ? "bg-sunken text-ink" : "text-muted hover:text-ink"
                   }`}
                 >
-                  {v.label}
+                  {t(`nav.${v}`)}
                 </a>
               ))}
             </nav>
           </div>
-          {view === "matrix" && (
-            <span className={`hidden rounded-full px-2.5 py-0.5 text-xs font-semibold sm:inline ${SOURCE[source].cls}`}>
-              {SOURCE[source].label}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {view === "matrix" && (
+              <span className={`hidden rounded-full px-2.5 py-0.5 text-xs font-semibold sm:inline ${SOURCE_STYLE[source]}`}>
+                {t(`source.${source}`)}
+              </span>
+            )}
+            <LanguageSwitch />
+          </div>
         </div>
       </header>
 
@@ -120,7 +146,7 @@ export default function App() {
 
             {rec && (
               <p className="max-w-[80ch] text-[15px]">
-                <strong className="text-accent">Recommended: Option {rec.id}.</strong> {matrix.recommendation_reason}
+                <strong className="text-accent">{t("matrix.recommended", { id: rec.id })}</strong> {matrix.recommendation_reason}
               </p>
             )}
 
@@ -135,8 +161,7 @@ export default function App() {
             <CheckAnswer current={matrix} onLoad={(m) => setData({ offer, matrix: m, source: "agent" })} />
 
             <footer className="pb-4 text-[12px] text-muted">
-              Profit margin = client revenue − (carrier freight + container rent + port fees). D&amp;D is detention plus
-              demurrage charged per box for each day past free time.
+              {t("matrix.footer")}
             </footer>
           </>
         )}

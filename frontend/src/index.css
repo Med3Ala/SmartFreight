@@ -29,8 +29,8 @@
   --carrier-7: #6250d6;
   --map-water: #dfe7ea;
   --map-land: #f7f9fa;
-  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
-  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-display: "Barlow Condensed", "IBM Plex Sans Arabic", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", ui-monospace, monospace;
 }
 @media (prefers-color-scheme: dark) {
@@ -133,6 +133,13 @@ h1, h2, h3 { text-wrap: balance; }
   text-transform: uppercase;
   color: var(--muted);
 }
+/* Arabic script is joined: no tracking, and a touch more line height. */
+[dir="rtl"] .label,
+[dir="rtl"] .tracking-wide,
+[dir="rtl"] .tracking-wider { letter-spacing: 0; }
+[dir="rtl"] body { line-height: 1.65; }
+/* The mono face has no Arabic glyphs; keep aligned digits with the body face instead. */
+[dir="rtl"] .font-mono { font-family: var(--font-body); font-variant-numeric: tabular-nums; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
