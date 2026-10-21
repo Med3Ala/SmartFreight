@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+/* Layout: an operations sheet. Offer facts, then an at-a-glance comparison, then A/B/C cards side by side. */
+:root {
+  --bg: #eef2f4;
+  --surface: #ffffff;
+  --sunken: #e4eaed;
+  --ink: #13222a;
+  --muted: #56666e;
+  --line: #d3dce0;
+  --accent: #c94a17; /* international orange, the colour of a working box */
+  --accent-soft: #fbe6dc;
+  --good: #23764a;
+  --good-soft: #dcf0e4;
+  --warn: #9a6512;
+  --warn-soft: #f8ecd2;
+  --bad: #b2362b;
+  --bad-soft: #f8dfdb;
+  --c-freight: #34535f;
+  --c-rent: #7d9ca8;
+  --c-port: #b6c7ce;
+  /* Carrier identity: fixed categorical order, validated for colour-vision deficiency. */
+  --carrier-1: #2a78d6;
+  --carrier-2: #eb6834;
+  --carrier-3: #1baf7a;
+  --carrier-4: #eda100;
+  --carrier-5: #e87ba4;
+  --carrier-6: #008300;
+  --carrier-7: #6250d6;
+  --map-water: #dfe7ea;
+  --map-land: #f7f9fa;
+  --font-display: "Barlow Condensed", "IBM Plex Sans Arabic", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1519;
+    --surface: #152027;
+    --sunken: #1b2830;
+    --ink: #e3ebee;
+    --muted: #92a3ab;
+    --line: #273740;
+    --accent: #f0743d;
+    --accent-soft: #3b2219;
+    --good: #5cc58c;
+    --good-soft: #17322a;
+    --warn: #e2aa4c;
+    --warn-soft: #33291a;
+    --bad: #ee7063;
+    --bad-soft: #3a1f1d;
+    --c-freight: #79a1b2;
+    --c-rent: #4f7280;
+    --c-port: #334f5b;
+    --carrier-1: #3987e5;
+    --carrier-2: #d95926;
+    --carrier-3: #199e70;
+    --carrier-4: #c98500;
+    --carrier-5: #d55181;
+    --carrier-6: #008300;
+    --carrier-7: #9085e9;
+    --map-water: #0f1a20;
+    --map-land: #1d2b33;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1519;
+  --surface: #152027;
+  --sunken: #1b2830;
+  --ink: #e3ebee;
+  --muted: #92a3ab;
+  --line: #273740;
+  --accent: #f0743d;
+  --accent-soft: #3b2219;
+  --good: #5cc58c;
+  --good-soft: #17322a;
+  --warn: #e2aa4c;
+  --warn-soft: #33291a;
+  --bad: #ee7063;
+  --bad-soft: #3a1f1d;
+  --c-freight: #79a1b2;
+  --c-rent: #4f7280;
+  --c-port: #334f5b;
+  --carrier-1: #3987e5;
+  --carrier-2: #d95926;
+  --carrier-3: #199e70;
+  --carrier-4: #c98500;
+  --carrier-5: #d55181;
+  --carrier-6: #008300;
+  --carrier-7: #9085e9;
+  --map-water: #0f1a20;
+  --map-land: #1d2b33;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-freight: var(--c-freight);
+  --color-rent: var(--c-rent);
+  --color-port: var(--c-port);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-data);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+}
+h1, h2, h3 { text-wrap: balance; }
+.num { font-variant-numeric: tabular-nums; }
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+/* Arabic script is joined: no tracking, and a touch more line height. */
+[dir="rtl"] .label,
+[dir="rtl"] .tracking-wide,
+[dir="rtl"] .tracking-wider { letter-spacing: 0; }
+[dir="rtl"] body { line-height: 1.65; }
+/* The mono face has no Arabic glyphs; keep aligned digits with the body face instead. */
+[dir="rtl"] .font-mono { font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* Leaflet sits inside the themed page. */
+.leaflet-container { background: var(--map-water); font-family: var(--font-body); }
+.leaflet-tooltip { background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: none; font-size: 12px; }
+.leaflet-tooltip-top:before { border-top-color: var(--line); }
+.leaflet-bar a { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 85%, transparent) !important; color: var(--muted); }
+.leaflet-control-attribution a { color: var(--muted); }
