@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import TARIFFS from "../../../shared/freight-tariffs.json";
-import { t, tNote } from "../lib/i18n";
+import { lang, t, tNote } from "../lib/i18n";
+import { randomExample } from "../planner/examples";
 import { parseRequest } from "../planner/parse";
 import { plan } from "../planner/plan";
 
@@ -197,7 +198,7 @@ export default function RequestPanel({ onPlan }) {
           <button type="submit" disabled={!text.trim()} className="rounded-sm bg-accent px-5 py-2 text-[14px] font-semibold text-surface disabled:opacity-40">
             {t("req.ok")}
           </button>
-          <button type="button" onClick={() => setText(t("req.example"))} className="text-[13px] font-medium text-accent hover:underline">
+          <button type="button" onClick={() => setText(randomExample(lang().id, todayIso()))} className="text-[13px] font-medium text-accent hover:underline">
             {t("req.tryExample")}
           </button>
           {parsed && missing.length > 0 && <span className="text-[13px] text-bad">{t("req.missing")}</span>}
