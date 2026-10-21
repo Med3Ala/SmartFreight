@@ -1,5 +1,7 @@
 import asyncio
+import json
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import httpx
 import pytest
@@ -9,9 +11,11 @@ from app.gateways.traqo import (
     TraqoAuthError,
     TraqoClient,
     TraqoConfigError,
+    TraqoError,
     TraqoNotFound,
     TraqoRateLimited,
     TraqoUnavailable,
+    parse_shipment,
 )
 
 
@@ -130,3 +134,40 @@ def test_client_errors_not_retried(status, exc):
     with pytest.raises(exc):
         run(client.track_container("MRSU6859427", "MAEU"))
     assert len(calls) == 1
+
+
+FIXTURE = json.loads((Path(__file__).parent / "fixtures" / "traqo_container_MRSU6859427.json").read_text())
+
+
+def test_parses_real_container_response():
+    client, _, _ = make_client([httpx.Response(200, json=FIXTURE)])
+    result = run(client.track_container("MRSU6859427", "MAEU"))
+    assert result.payload == FIXTURE
+    s = result.shipment
+    assert s.reference_number == "MRSU6859427" and s.sealine_name == "Maersk"
+    assert s.status == "DELIVERED" and not s.is_active and s.is_delayed is None
+    assert (s.origin, s.destination) == ("Shanghai, China", "Antwerp, Belgium")
+    assert s.ata == datetime(2026, 9, 21, 11, 49) and s.eta is None
+    assert s.total_days == 61 and s.position == pytest.approx((51.2024, 4.3829), abs=1e-4)
+    assert [(c.number, c.size_type, c.iso_code) for c in s.containers] == [("MRSU6859427", "40HC", "45G0")]
+    assert [e.code for e in s.events][:4] == ["GTOT", "GTIN", "LOAD", "DEPA"]
+    assert s.events[0].timestamp_utc == datetime(2026, 7, 27, 5, 35, tzinfo=timezone.utc)
+    transship = [e for e in s.events if e.locode == "MAPTM"]
+    assert {e.vessel for e in transship} == {"MAERSK ELBA", "KASSIAKOS"}
+    assert [leg.leg for leg in s.voyage] == ["prepol", "pol", "pod", "postpod"]
+    assert s.voyage[1].departed_at == datetime(2026, 8, 12, 15, 37)
+    assert [(v.name, v.is_current) for v in s.vessels] == [("MAERSK ELBA", False), ("KASSIAKOS", True)]
+    assert len(s.route) == 5 and s.route[0] == pytest.approx((31.4001, 121.4971), abs=1e-4)
+    assert s.provider_cached is False
+
+    assert run(client.track_container("MRSU6859427", "MAEU")).shipment == s
+
+
+def test_unrecognised_payload_keeps_raw_without_shipment():
+    assert parse_shipment({"status": "ok"}) is None
+
+
+def test_success_false_raises():
+    client, _, _ = make_client([httpx.Response(200, json={"success": False, "message": "nope"})])
+    with pytest.raises(TraqoError):
+        run(client.track_container("MRSU6859427", "MAEU"))
