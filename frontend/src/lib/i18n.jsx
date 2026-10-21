@@ -2,6 +2,8 @@
 // Data that comes from the agent or carriers (summaries, pitfalls, port names) is shown as received.
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import NOTES_EN from "../../../shared/plan-notes.en.json";
+import { formatParam } from "../planner/plan";
 
 export const LANGUAGES = [
   { id: "en", label: "EN", name: "English", intl: "en-GB", dir: "ltr" },
@@ -12,6 +14,7 @@ export const LANGUAGES = [
 
 const STRINGS = {
   en: {
+    ...Object.fromEntries(Object.entries(NOTES_EN).map(([k, v]) => [`note.${k}`, v])),
     "nav.views": "Views",
     "nav.matrix": "Best Formula Matrix",
     "nav.tracking": "Live tracking",
@@ -195,6 +198,38 @@ const STRINGS = {
     "detail.boxes": "Boxes",
     "detail.events": "Events",
     "detail.planned": "(planned)",
+
+    "source.planned": "Planned from your request",
+    "req.title": "New client request",
+    "req.help": "Paste the client's shipment request as written, in English, French or Arabic. Press OK to get the three best options. You can correct anything that was misread and the options update.",
+    "req.label": "Client shipment request",
+    "req.placeholder": "e.g. Client: Medjerda Olive Oil Co. 18.4 t of bottled olive oil, about 100 m3, from Rades to Rotterdam, delivery before 14 Nov. Budget $7,800.",
+    "req.ok": "OK",
+    "req.tryExample": "Try an example",
+    "req.example": "Client: Medjerda Olive Oil Co.\nWe need to ship 18.4 t of bottled olive oil, about 100 m3, from the Port of Rades to Rotterdam. Delivery before 14 November. Budget $7,800.",
+    "req.missing": "Some details are missing. Fill in the highlighted fields below.",
+    "req.understood": "What I understood",
+    "req.editHint": "Change any field and the options update.",
+    "req.origin": "From",
+    "req.destination": "To",
+    "req.choosePort": "Choose a port",
+    "req.weight": "Weight (kg)",
+    "req.volume": "Volume (m³)",
+    "req.deadline": "Deliver by",
+    "req.price": "Client price",
+    "req.currency": "Currency",
+    "req.client": "Client",
+    "req.commodity": "Cargo",
+    "req.boxes": "Containers asked for",
+    "req.addBox": "Add a box",
+    "req.autoBoxes": "Let the planner choose",
+    "req.removeBox": "Remove {box}",
+    "req.reefer": "Refrigerated (reefer)",
+    "req.hazmat": "Dangerous goods",
+    "req.needed": "needed",
+    "req.unnamed": "New client",
+    "req.generalCargo": "General cargo",
+    "req.assumptions": "Assumptions",
   },
 
   fr: {
@@ -381,6 +416,64 @@ const STRINGS = {
     "detail.boxes": "Conteneurs",
     "detail.events": "Événements",
     "detail.planned": "(prévu)",
+
+    "source.planned": "Planifié depuis votre demande",
+    "req.title": "Nouvelle demande client",
+    "req.help": "Collez la demande d'expédition du client telle quelle, en français, anglais ou arabe. Appuyez sur OK pour obtenir les trois meilleures options. Vous pouvez corriger ce qui a été mal lu et les options se mettent à jour.",
+    "req.label": "Demande d'expédition du client",
+    "req.placeholder": "ex. Client : Medjerda Olive Oil Co. 18,4 t d'huile d'olive en bouteilles, environ 100 m3, de Radès à Rotterdam, livraison avant le 14 novembre. Budget 7 800 $.",
+    "req.ok": "OK",
+    "req.tryExample": "Essayer un exemple",
+    "req.example": "Client : Medjerda Olive Oil Co.\nNous devons expédier 18,4 t d'huile d'olive en bouteilles, environ 100 m3, du port de Radès à destination de Rotterdam. Livraison avant le 14 novembre. Budget 7 800 $.",
+    "req.missing": "Il manque des informations. Complétez les champs en rouge ci-dessous.",
+    "req.understood": "Ce que j'ai compris",
+    "req.editHint": "Modifiez un champ et les options se mettent à jour.",
+    "req.origin": "Départ",
+    "req.destination": "Arrivée",
+    "req.choosePort": "Choisir un port",
+    "req.weight": "Poids (kg)",
+    "req.volume": "Volume (m³)",
+    "req.deadline": "Livrer avant le",
+    "req.price": "Prix client",
+    "req.currency": "Devise",
+    "req.client": "Client",
+    "req.commodity": "Marchandise",
+    "req.boxes": "Conteneurs demandés",
+    "req.addBox": "Ajouter un conteneur",
+    "req.autoBoxes": "Laisser le planificateur choisir",
+    "req.removeBox": "Retirer {box}",
+    "req.reefer": "Réfrigéré (reefer)",
+    "req.hazmat": "Matières dangereuses",
+    "req.needed": "requis",
+    "req.unnamed": "Nouveau client",
+    "req.generalCargo": "Marchandise générale",
+    "req.assumptions": "Hypothèses",
+
+    "note.sum.a": "{carriers} au coût total le plus bas, avec des conteneurs {sourcing}.",
+    "note.sum.b": "{carriers} : le transit le plus court, sur conteneurs du transporteur.",
+    "note.sum.c": "{mix} avec {carriers}, dimensionné pour le meilleur coût par jour de transit.",
+    "note.sourcing.leased": "loués (Container xChange)",
+    "note.sourcing.owned": "du transporteur",
+    "note.pit.transship": "{carrier} transborde sur cette ligne, ce qui ajoute un risque de report.",
+    "note.pit.leased": "Les conteneurs loués sont souvent anciens ; vérifiez la plaque CSC avant l'empotage.",
+    "note.pit.free_dest": "Seulement {days} jours de franchise à destination ; réservez le transporteur routier avant l'arrivée.",
+    "note.pit.split": "Réparti sur {n} transporteurs : réservations et connaissements séparés, la marchandise peut arriver en deux fois.",
+    "note.pit.reefer": "Marchandise réfrigérée : réservez les prises aux deux terminaux et faites un PTI avant chargement.",
+    "note.pit.hazmat": "Matières dangereuses : acceptation DG du transporteur et déclaration IMDG nécessaires avant réservation.",
+    "note.pit.low_fill": "Les conteneurs ne sont remplis qu'à {pct} ; vous payez pour transporter du vide.",
+    "note.pit.heavy": "La marchandise approche la charge utile maximale ; vérifiez les limites de poids routières aux deux bouts.",
+    "note.pit.late": "Dépasse le délai d'environ {days} jours, en comptant {lead} jours de réservation et d'entrée au terminal.",
+    "note.pit.tight": "Seulement {days} jours de marge avant le délai.",
+    "note.pit.free_time": "Franchise de {origin} jours au départ et {dest} à l'arrivée ; détention et surestaries s'appliquent ensuite.",
+    "note.as.example_rates": "Les tarifs sont des exemples tant que les cotations réelles des transporteurs et de Container xChange ne sont pas connectées.",
+    "note.as.no_price": "Pas de prix client dans la demande : les marges utilisent une cotation suggérée de {amount_usd}.",
+    "note.as.currency": "Le prix client a été converti de {from} en USD au taux de {rate}.",
+    "note.as.volume_estimated": "Pas de volume indiqué ; {volume} m³ estimés d'après le poids.",
+    "note.as.weight_estimated": "Pas de poids indiqué ; {weight} kg estimés d'après le volume.",
+    "note.as.boxes_requested": "Le client a demandé des conteneurs précis : toutes les options les utilisent.",
+    "note.as.no_deadline": "Pas de délai dans la demande : le risque de délai suppose aucune date impérative.",
+    "note.rec.best": "L'option {id} garde la meilleure marge ({pct}) parmi les options qui respectent le délai, avec {days} jours de transit.",
+    "note.rec.fastest": "Aucune option ne respecte confortablement le délai ; l'option {id} est la plus rapide.",
   },
 
   ar: {
@@ -577,6 +670,64 @@ const STRINGS = {
     "detail.boxes": "الحاويات",
     "detail.events": "الأحداث",
     "detail.planned": "(مخطط)",
+
+    "source.planned": "مخطط من طلبك",
+    "req.title": "طلب عميل جديد",
+    "req.help": "الصق طلب الشحن كما كتبه العميل، بالعربية أو الفرنسية أو الإنجليزية. اضغط موافق لتحصل على أفضل ثلاثة خيارات. يمكنك تصحيح أي معلومة قُرئت خطأ وستتحدث الخيارات.",
+    "req.label": "طلب الشحن من العميل",
+    "req.placeholder": "مثال: العميل: شركة مجردة لزيت الزيتون. 18.4 طن من زيت الزيتون المعبأ، حوالي 100 م3، من رادس إلى روتردام، التسليم قبل 14 نوفمبر. الميزانية 7800 دولار.",
+    "req.ok": "موافق",
+    "req.tryExample": "جرّب مثالًا",
+    "req.example": "العميل: شركة مجردة لزيت الزيتون\nنريد شحن 18.4 طن من زيت الزيتون المعبأ، حوالي 100 م3، من ميناء رادس إلى روتردام. التسليم قبل 14 نوفمبر. الميزانية 7800 دولار.",
+    "req.missing": "بعض المعلومات ناقصة. أكمل الحقول المميزة بالأحمر أدناه.",
+    "req.understood": "ما فهمته",
+    "req.editHint": "غيّر أي حقل وستتحدث الخيارات.",
+    "req.origin": "من",
+    "req.destination": "إلى",
+    "req.choosePort": "اختر ميناء",
+    "req.weight": "الوزن (كغ)",
+    "req.volume": "الحجم (م³)",
+    "req.deadline": "التسليم قبل",
+    "req.price": "سعر العميل",
+    "req.currency": "العملة",
+    "req.client": "العميل",
+    "req.commodity": "البضاعة",
+    "req.boxes": "الحاويات المطلوبة",
+    "req.addBox": "أضف حاوية",
+    "req.autoBoxes": "دع المخطِّط يختار",
+    "req.removeBox": "احذف {box}",
+    "req.reefer": "مبردة",
+    "req.hazmat": "مواد خطرة",
+    "req.needed": "مطلوب",
+    "req.unnamed": "عميل جديد",
+    "req.generalCargo": "بضائع عامة",
+    "req.assumptions": "افتراضات",
+
+    "note.sum.a": "{carriers} بأقل تكلفة إجمالية، بحاويات {sourcing}.",
+    "note.sum.b": "{carriers}: أقصر مدة عبور، بحاويات الناقل.",
+    "note.sum.c": "{mix} مع {carriers}، بحجم يناسب البضاعة لأفضل تكلفة مقابل أيام العبور.",
+    "note.sourcing.leased": "مستأجرة (Container xChange)",
+    "note.sourcing.owned": "مملوكة للناقل",
+    "note.pit.transship": "{carrier} يعتمد المسافنة على هذا الخط، ما يزيد خطر تأجيل الشحنة.",
+    "note.pit.leased": "الحاويات المستأجرة غالبًا قديمة؛ تحقق من لوحة CSC قبل التعبئة.",
+    "note.pit.free_dest": "{days} أيام مجانية فقط في الوجهة؛ احجز النقل البري قبل الوصول.",
+    "note.pit.split": "موزعة على {n} ناقلين: حجوزات وبوالص شحن منفصلة، وقد تصل البضاعة على دفعتين.",
+    "note.pit.reefer": "بضاعة مبردة: احجز مآخذ الكهرباء في المحطتين وأجرِ فحص PTI قبل التحميل.",
+    "note.pit.hazmat": "مواد خطرة: يلزم قبول الناقل للبضائع الخطرة وتصريح IMDG قبل الحجز.",
+    "note.pit.low_fill": "الحاويات ممتلئة بنسبة {pct} فقط؛ أنت تدفع لنقل فراغ.",
+    "note.pit.heavy": "البضاعة قريبة من الحد الأقصى لحمولة الحاويات؛ تحقق من حدود الوزن على الطرق في الجهتين.",
+    "note.pit.late": "يتجاوز الموعد بحوالي {days} أيام، مع احتساب {lead} أيام للحجز والدخول إلى المحطة.",
+    "note.pit.tight": "هامش {days} أيام فقط قبل الموعد.",
+    "note.pit.free_time": "المهلة المجانية {origin} أيام في المنشأ و{dest} في الوجهة؛ بعدها تُطبَّق رسوم الاحتجاز والأرضية.",
+    "note.as.example_rates": "الأسعار تجريبية إلى حين ربط عروض الناقلين وContainer xChange الحقيقية.",
+    "note.as.no_price": "لا يوجد سعر للعميل في الطلب، لذا تُحسب الهوامش على أساس عرض مقترح قدره {amount_usd}.",
+    "note.as.currency": "تم تحويل سعر العميل من {from} إلى الدولار بسعر {rate}.",
+    "note.as.volume_estimated": "لم يُذكر الحجم؛ قُدّر بـ {volume} م³ من الوزن.",
+    "note.as.weight_estimated": "لم يُذكر الوزن؛ قُدّر بـ {weight} كغ من الحجم.",
+    "note.as.boxes_requested": "طلب العميل حاويات محددة، لذا تستخدمها كل الخيارات.",
+    "note.as.no_deadline": "لا يوجد موعد في الطلب، لذا يفترض تقييم خطر التأخير عدم وجود تاريخ ملزم.",
+    "note.rec.best": "الخيار {id} يحقق أفضل هامش ({pct}) بين الخيارات التي تحترم الموعد، مع {days} أيام عبور.",
+    "note.rec.fastest": "لا يوجد خيار يحترم الموعد براحة؛ الخيار {id} هو الأسرع.",
   },
 };
 
@@ -601,6 +752,20 @@ t.plural = (key, n, vars = {}) => {
   const found = [`${key}.${rule}`, `${key}.other`].find((k) => k in table || k in STRINGS.en);
   return t(found, { n, ...vars });
 };
+
+// Planner notes ({ code, params }) in the current language; see formatParam in planner/plan.js.
+export function tNote({ code, params = {} }) {
+  const text = STRINGS[current.id][`note.${code}`] ?? STRINGS.en[`note.${code}`] ?? code;
+  const fmt = {
+    money: (v) => new Intl.NumberFormat(current.intl, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v),
+    percent: (v) => pct(v),
+    nested: (c) => STRINGS[current.id][`note.${c}`] ?? STRINGS.en[`note.${c}`] ?? c,
+  };
+  return fill(
+    text,
+    Object.fromEntries(Object.entries(params).map(([k, v]) => [k, typeof v === "number" && !k.endsWith("_usd") && k !== "pct" ? num(v) : formatParam(k, v, fmt)])),
+  );
+}
 
 export const lang = () => current;
 export const num = (v, opts) => new Intl.NumberFormat(current.intl, opts).format(v);

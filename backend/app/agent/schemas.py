@@ -9,6 +9,13 @@ from pydantic import BaseModel, Field, computed_field, model_validator
 Money = Annotated[Decimal, Field(ge=0, decimal_places=2)]
 
 
+class Note(BaseModel):
+    """A planner message as a code plus params, so the dashboard can show it in the user's language."""
+
+    code: str
+    params: dict[str, str | int | float] = {}
+
+
 class Strategy(str, Enum):
     LOWEST_COST = "lowest_cost"
     FASTEST_TRANSIT = "fastest_transit"
@@ -70,12 +77,14 @@ class RiskAnalysis(BaseModel):
     demurrage_fee_per_day: Money | None = None
     deadline_risk: Literal["low", "medium", "high"]
     pitfalls: list[str] = Field(min_length=1)
+    pitfall_notes: list[Note] = []
 
 
 class FormulaOption(BaseModel):
     id: Literal["A", "B", "C"]
     strategy: Strategy
     summary: str
+    summary_note: Note | None = None
     transit_days: int = Field(gt=0)
     profit_margin: ProfitMargin
     equipment: EquipmentConfiguration
@@ -93,6 +102,7 @@ class BestFormulaMatrix(BaseModel):
     options: list[FormulaOption] = Field(min_length=3, max_length=3)
     recommended: Literal["A", "B", "C"]
     recommendation_reason: str
+    recommendation_note: Note | None = None
 
     @model_validator(mode="after")
     def _exactly_a_b_c(self) -> "BestFormulaMatrix":

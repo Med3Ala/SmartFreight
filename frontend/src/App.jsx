@@ -3,8 +3,9 @@ import CheckAnswer from "./components/CheckAnswer";
 import Glance from "./components/Glance";
 import Arrow from "./components/Arrow";
 import OptionCard from "./components/OptionCard";
+import RequestPanel, { Assumptions } from "./components/RequestPanel";
 import { loadDashboard } from "./lib/api";
-import { LANGUAGES, date, num, t, useLang } from "./lib/i18n";
+import { LANGUAGES, date, num, t, tNote, useLang } from "./lib/i18n";
 import TrackingPage from "./tracking/TrackingPage";
 
 const VIEWS = ["matrix", "tracking"];
@@ -14,6 +15,7 @@ const SOURCE_STYLE = {
   live: "bg-good-soft text-good",
   example: "bg-warn-soft text-warn",
   agent: "bg-accent-soft text-accent",
+  planned: "bg-accent-soft text-accent",
 };
 
 function LanguageSwitch() {
@@ -142,13 +144,17 @@ export default function App() {
           <TrackingPage offer={offer} matrix={matrix} />
         ) : (
           <>
+            <RequestPanel onPlan={(o, m, assumptions) => setData({ offer: o, matrix: m, source: "planned", assumptions })} />
+
             <OfferPanel offer={offer} />
 
             {rec && (
               <p className="max-w-[80ch] text-[15px]">
-                <strong className="text-accent">{t("matrix.recommended", { id: rec.id })}</strong> {matrix.recommendation_reason}
+                <strong className="text-accent">{t("matrix.recommended", { id: rec.id })}</strong> {matrix.recommendation_note ? tNote(matrix.recommendation_note) : matrix.recommendation_reason}
               </p>
             )}
+
+            <Assumptions notes={data.assumptions} />
 
             <Glance matrix={matrix} />
 

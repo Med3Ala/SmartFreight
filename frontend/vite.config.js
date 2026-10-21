@@ -7,5 +7,5 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss(), ...(mode === "preview" ? [viteSingleFile()] : [])],
   build: { outDir: mode === "preview" ? "dist-preview" : "dist" },
-  server: { proxy: { "/api": "http://localhost:8000" } },
+  server: { proxy: { "/api": "http://localhost:8000" }, fs: { allow: [".."] } },
 }));

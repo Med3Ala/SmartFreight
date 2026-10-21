@@ -1,4 +1,4 @@
-import { pct, t } from "../lib/i18n";
+import { pct, t, tNote } from "../lib/i18n";
 import { boxCount, ddPerDay, isoCode, margin, money, strategyLabel } from "../lib/matrix";
 
 const RISK_STYLE = {
@@ -135,7 +135,7 @@ function Risk({ option, currency }) {
         </p>
       )}
       <ul className="flex list-disc flex-col gap-1.5 ps-5 text-[13px] marker:text-muted">
-        {r.pitfalls.map((p, i) => (
+        {(r.pitfall_notes?.length ? r.pitfall_notes.map(tNote) : r.pitfalls).map((p, i) => (
           <li key={i}>{p}</li>
         ))}
       </ul>
@@ -169,7 +169,7 @@ export default function OptionCard({ option, recommended }) {
               <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t("card.recommended")}</span>
             )}
           </div>
-          <p className="text-[13px] text-muted">{option.summary}</p>
+          <p className="text-[13px] text-muted">{option.summary_note ? tNote(option.summary_note) : option.summary}</p>
         </div>
       </header>
 

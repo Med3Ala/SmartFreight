@@ -1,10 +1,14 @@
 """SmartFreight API for the dashboard."""
 
+from datetime import date
+
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 
 from .agent import BestFormulaMatrix
 from .demo import DEMO_MATRIX, DEMO_OFFER
+from .planner import TARIFFS, plan
 from .tracking import tracking_snapshot
 
 app = FastAPI(title="SmartFreight AI")
@@ -42,3 +46,44 @@ def validate_matrix(matrix: BestFormulaMatrix) -> BestFormulaMatrix:
 async def get_tracking() -> dict:
     """Containers and vessels on the watchlist, live from Traqo when TRAQO_API_KEY is set."""
     return await tracking_snapshot()
+
+
+class Price(BaseModel):
+    amount: float = Field(gt=0)
+    currency: str = "USD"
+
+
+class BoxRequest(BaseModel):
+    code: str
+    count: int = Field(gt=0)
+
+
+class ShipmentRequest(BaseModel):
+    client: str = ""
+    origin: str
+    destination: str
+    weight_kg: float | None = Field(default=None, gt=0)
+    volume_m3: float | None = Field(default=None, gt=0)
+    commodity: str = ""
+    reefer: bool = False
+    hazmat: bool = False
+    deadline: date | None = None
+    price: Price | None = None
+    containers: list[BoxRequest] = []
+
+
+@app.post("/api/plan")
+def plan_request(request: ShipmentRequest) -> dict:
+    """Options A, B and C for one client request, built from the example tariffs."""
+    for port in (request.origin, request.destination):
+        if port not in TARIFFS["ports"]:
+            raise HTTPException(422, f"Unknown port {port}. Known ports: {', '.join(sorted(TARIFFS['ports']))}")
+    for box in request.containers:
+        if box.code not in TARIFFS["equipment"]:
+            raise HTTPException(422, f"Unknown container type {box.code}")
+    if not (request.weight_kg or request.volume_m3 or request.containers):
+        raise HTTPException(422, "Give a weight, a volume or the containers wanted")
+    body = request.model_dump(mode="json")
+    result = plan(body, date.today().isoformat())
+    BestFormulaMatrix.model_validate(result["matrix"])  # the planner must honour the agent's contract
+    return result

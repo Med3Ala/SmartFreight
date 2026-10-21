@@ -1,0 +1,477 @@
+{
+ "_about": "EXAMPLE tariffs for planning until Searates / Container xChange are connected. Freight in USD per box for a 40ft dry van; other boxes scale by equipment.rate and carrier.rate. Lanes give [base_usd, fastest_transit_days] and apply in both directions.",
+ "usable_volume": 0.85,
+ "soc_discount": 0.2,
+ "hazmat_surcharge": 300,
+ "thc_40_factor": 1.5,
+ "bl_fee": 60,
+ "lead_days": 3,
+ "suggested_markup": 1.18,
+ "assumed_density_kg_m3": 300,
+ "ports": {
+  "Rades": {
+   "region": "NAF",
+   "country": "TN",
+   "aliases": [
+    "rades",
+    "radès",
+    "tunis",
+    "رادس"
+   ]
+  },
+  "Sfax": {
+   "region": "NAF",
+   "country": "TN",
+   "aliases": [
+    "sfax",
+    "صفاقس"
+   ]
+  },
+  "Bizerte": {
+   "region": "NAF",
+   "country": "TN",
+   "aliases": [
+    "bizerte",
+    "بنزرت"
+   ]
+  },
+  "Algiers": {
+   "region": "NAF",
+   "country": "DZ",
+   "aliases": [
+    "algiers",
+    "alger",
+    "الجزائر العاصمة"
+   ]
+  },
+  "Tanger Med": {
+   "region": "NAF",
+   "country": "MA",
+   "aliases": [
+    "tanger med",
+    "tangier",
+    "tanger",
+    "طنجة"
+   ]
+  },
+  "Genoa": {
+   "region": "WMED",
+   "country": "IT",
+   "aliases": [
+    "genoa",
+    "gênes",
+    "genes",
+    "genova",
+    "جنوة"
+   ]
+  },
+  "Valencia": {
+   "region": "WMED",
+   "country": "ES",
+   "aliases": [
+    "valencia",
+    "valence",
+    "فالنسيا"
+   ]
+  },
+  "Barcelona": {
+   "region": "WMED",
+   "country": "ES",
+   "aliases": [
+    "barcelona",
+    "barcelone",
+    "برشلونة"
+   ]
+  },
+  "Marseille Fos": {
+   "region": "WMED",
+   "country": "FR",
+   "aliases": [
+    "marseille fos",
+    "marseille",
+    "fos",
+    "مرسيليا"
+   ]
+  },
+  "Port Said": {
+   "region": "EMED",
+   "country": "EG",
+   "aliases": [
+    "port said",
+    "بورسعيد",
+    "بور سعيد"
+   ]
+  },
+  "Piraeus": {
+   "region": "EMED",
+   "country": "GR",
+   "aliases": [
+    "piraeus",
+    "le pirée",
+    "pirée",
+    "piree",
+    "بيرايوس"
+   ]
+  },
+  "Istanbul": {
+   "region": "EMED",
+   "country": "TR",
+   "aliases": [
+    "istanbul",
+    "ambarli",
+    "ambarlı",
+    "إسطنبول",
+    "اسطنبول"
+   ]
+  },
+  "Rotterdam": {
+   "region": "NEUR",
+   "country": "NL",
+   "aliases": [
+    "rotterdam",
+    "روتردام"
+   ]
+  },
+  "Antwerp": {
+   "region": "NEUR",
+   "country": "BE",
+   "aliases": [
+    "antwerp",
+    "anvers",
+    "antwerpen",
+    "أنتويرب",
+    "انتويرب"
+   ]
+  },
+  "Hamburg": {
+   "region": "NEUR",
+   "country": "DE",
+   "aliases": [
+    "hamburg",
+    "hambourg",
+    "هامبورغ",
+    "هامبورج"
+   ]
+  },
+  "Le Havre": {
+   "region": "NEUR",
+   "country": "FR",
+   "aliases": [
+    "le havre",
+    "havre",
+    "لوهافر"
+   ]
+  },
+  "Shanghai": {
+   "region": "FEAST",
+   "country": "CN",
+   "aliases": [
+    "shanghai",
+    "شنغهاي"
+   ]
+  },
+  "Ningbo": {
+   "region": "FEAST",
+   "country": "CN",
+   "aliases": [
+    "ningbo",
+    "نينغبو"
+   ]
+  },
+  "Singapore": {
+   "region": "FEAST",
+   "country": "SG",
+   "aliases": [
+    "singapore",
+    "singapour",
+    "سنغافورة"
+   ]
+  },
+  "Nhava Sheva": {
+   "region": "ISC",
+   "country": "IN",
+   "aliases": [
+    "nhava sheva",
+    "jnpt",
+    "mumbai",
+    "bombay",
+    "مومباي"
+   ]
+  },
+  "New York": {
+   "region": "USEC",
+   "country": "US",
+   "aliases": [
+    "new york",
+    "newark",
+    "نيويورك"
+   ]
+  }
+ },
+ "lanes": {
+  "NAF-NAF": [
+   500,
+   2
+  ],
+  "NAF-WMED": [
+   650,
+   3
+  ],
+  "NAF-EMED": [
+   900,
+   5
+  ],
+  "NAF-NEUR": [
+   1500,
+   7
+  ],
+  "NAF-FEAST": [
+   2600,
+   30
+  ],
+  "NAF-ISC": [
+   1900,
+   20
+  ],
+  "NAF-USEC": [
+   2400,
+   16
+  ],
+  "WMED-WMED": [
+   450,
+   2
+  ],
+  "WMED-EMED": [
+   800,
+   4
+  ],
+  "WMED-NEUR": [
+   1300,
+   6
+  ],
+  "WMED-FEAST": [
+   2400,
+   28
+  ],
+  "WMED-ISC": [
+   1700,
+   18
+  ],
+  "WMED-USEC": [
+   2100,
+   12
+  ],
+  "EMED-EMED": [
+   450,
+   2
+  ],
+  "EMED-NEUR": [
+   1500,
+   9
+  ],
+  "EMED-FEAST": [
+   2300,
+   24
+  ],
+  "EMED-ISC": [
+   1500,
+   14
+  ],
+  "EMED-USEC": [
+   2300,
+   15
+  ],
+  "NEUR-NEUR": [
+   450,
+   2
+  ],
+  "NEUR-FEAST": [
+   2200,
+   32
+  ],
+  "NEUR-ISC": [
+   1900,
+   22
+  ],
+  "NEUR-USEC": [
+   1800,
+   9
+  ],
+  "FEAST-FEAST": [
+   600,
+   4
+  ],
+  "FEAST-ISC": [
+   1200,
+   12
+  ],
+  "FEAST-USEC": [
+   3000,
+   32
+  ],
+  "ISC-ISC": [
+   500,
+   3
+  ],
+  "ISC-USEC": [
+   2600,
+   25
+  ],
+  "USEC-USEC": [
+   600,
+   3
+  ]
+ },
+ "carriers": [
+  {
+   "name": "Maersk",
+   "scac": "MAEU",
+   "rate": 1.15,
+   "transit": 1.0,
+   "on_time": 0.86,
+   "free_origin": 5,
+   "free_dest": 4,
+   "detention": 90,
+   "demurrage": 110,
+   "transshipment": false
+  },
+  {
+   "name": "MSC",
+   "scac": "MSCU",
+   "rate": 0.9,
+   "transit": 1.35,
+   "on_time": 0.7,
+   "free_origin": 4,
+   "free_dest": 3,
+   "detention": 65,
+   "demurrage": 85,
+   "transshipment": true
+  },
+  {
+   "name": "CMA CGM",
+   "scac": "CMDU",
+   "rate": 1.0,
+   "transit": 1.15,
+   "on_time": 0.78,
+   "free_origin": 5,
+   "free_dest": 4,
+   "detention": 70,
+   "demurrage": 95,
+   "transshipment": false
+  },
+  {
+   "name": "Hapag-Lloyd",
+   "scac": "HLCU",
+   "rate": 1.08,
+   "transit": 1.05,
+   "on_time": 0.83,
+   "free_origin": 5,
+   "free_dest": 5,
+   "detention": 80,
+   "demurrage": 100,
+   "transshipment": false
+  },
+  {
+   "name": "COSCO",
+   "scac": "COSU",
+   "rate": 0.94,
+   "transit": 1.2,
+   "on_time": 0.74,
+   "free_origin": 4,
+   "free_dest": 4,
+   "detention": 60,
+   "demurrage": 90,
+   "transshipment": true
+  },
+  {
+   "name": "ONE",
+   "scac": "ONEY",
+   "rate": 1.03,
+   "transit": 1.1,
+   "on_time": 0.8,
+   "free_origin": 5,
+   "free_dest": 4,
+   "detention": 75,
+   "demurrage": 95,
+   "transshipment": false
+  },
+  {
+   "name": "Evergreen",
+   "scac": "EGLV",
+   "rate": 0.96,
+   "transit": 1.18,
+   "on_time": 0.76,
+   "free_origin": 4,
+   "free_dest": 4,
+   "detention": 65,
+   "demurrage": 90,
+   "transshipment": true
+  }
+ ],
+ "equipment": {
+  "20DV": {
+   "size": "20ft",
+   "type": "Dry Van",
+   "volume_m3": 33.2,
+   "payload_kg": 28200,
+   "rate": 0.62,
+   "lease": 95,
+   "reefer": false,
+   "teu": 1
+  },
+  "40DV": {
+   "size": "40ft",
+   "type": "Dry Van",
+   "volume_m3": 67.7,
+   "payload_kg": 26700,
+   "rate": 1.0,
+   "lease": 140,
+   "reefer": false,
+   "teu": 2
+  },
+  "40HC": {
+   "size": "40ft",
+   "type": "High Cube Dry Van",
+   "volume_m3": 76.4,
+   "payload_kg": 26500,
+   "rate": 1.06,
+   "lease": 150,
+   "reefer": false,
+   "teu": 2
+  },
+  "20RF": {
+   "size": "20ft",
+   "type": "Reefer",
+   "volume_m3": 28.3,
+   "payload_kg": 27400,
+   "rate": 1.15,
+   "lease": 450,
+   "reefer": true,
+   "teu": 1
+  },
+  "40RH": {
+   "size": "40ft",
+   "type": "High Cube Reefer",
+   "volume_m3": 67.5,
+   "payload_kg": 29000,
+   "rate": 1.85,
+   "lease": 600,
+   "reefer": true,
+   "teu": 2
+  }
+ },
+ "thc_20": {
+  "NAF": 140,
+  "WMED": 180,
+  "EMED": 160,
+  "NEUR": 210,
+  "FEAST": 90,
+  "ISC": 110,
+  "USEC": 300
+ },
+ "fx_usd": {
+  "USD": 1,
+  "EUR": 1.08,
+  "TND": 0.32
+ }
+}
