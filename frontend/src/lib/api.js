@@ -1,4 +1,5 @@
 import demo from "../demo.json";
+import demoTracking from "../demoTracking.json";
 import { checkOffline } from "./matrix";
 
 async function getJson(url, init) {
@@ -43,5 +44,31 @@ export async function checkAnswer(text) {
   } catch {
     const errors = checkOffline(parsed);
     return errors.length ? { errors } : { matrix: parsed, offline: true };
+  }
+}
+
+// Shifts the bundled example so its ETAs stay relative to today.
+function shiftExample(snapshot) {
+  const offset = Date.now() - Date.parse(snapshot.generated_at);
+  const move = (iso) => (iso ? new Date(Date.parse(iso) + offset).toISOString() : iso);
+  return {
+    ...snapshot,
+    shipments: snapshot.shipments.map((s) => ({
+      ...s,
+      eta: move(s.eta),
+      ata: move(s.ata),
+      last_synced_at: move(s.last_synced_at),
+      events: s.events.map((e) => ({ ...e, time: move(e.time) })),
+    })),
+  };
+}
+
+export async function loadTracking() {
+  try {
+    const res = await getJson("/api/tracking");
+    if (!res.ok || !Array.isArray(res.body?.shipments)) throw new Error("no tracking");
+    return res.body.source === "example" ? shiftExample(res.body) : res.body;
+  } catch {
+    return shiftExample(demoTracking);
   }
 }
